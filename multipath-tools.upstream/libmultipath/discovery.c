@@ -479,33 +479,21 @@ static void
 sysfs_set_io_count(struct multipath *mpp, struct path *pp)
 {
         struct udev_device *scsi_dev = NULL;
-        char end_dev_id[64];
+        char block_dev[64];
         char value[11];
 
-        sprintf(end_dev_id, "end_device-%d:%d",
-                pp->sg_id.host_no, pp->sg_id.transport_id);
+        sprintf(block_dev, "%s",
+                pp->dev);
         scsi_dev = udev_device_new_from_subsystem_sysname(conf->udev,
-                                "sas_end_device", end_dev_id);
+                                "block", block_dev);
         if (!scsi_dev) {
-                condlog(1, "%s: No SAS end device for '%s'", pp->dev,
-                        end_dev_id);
+                condlog(1, "%s: No device found for '%s'", pp->dev,
+                        scsi_dev);
                 return;
         }
-        condlog(4, "target%d:%d:%d -> %s", pp->sg_id.host_no,
-                pp->sg_id.channel, pp->sg_id.scsi_id, end_dev_id);
-
-        if (mpp->dev_loss) {
-                snprintf(value, 11, "%u", mpp->dev_loss);
-                if (sysfs_attr_set_value(sas_dev, "I_T_nexus_loss_timeout",
-                                         value, 11) <= 0)
-                        condlog(3, "%s: failed to update "
-                                "I_T Nexus loss timeout, error %d",
-                                pp->dev, errno);
-        }
-
-	if (sysfs_attr_set_value(, "dev_loss_tmo",
+	if (sysfs_attr_set_value(scsi_dev, "io_count",
                                                  value, 11) <= 0)
-                                condlog(0, "%s failed to set dev_loss_tmo",
+                                condlog(0, "%s failed to set io_count",
                                         mpp->alias);
 
         return 0;
